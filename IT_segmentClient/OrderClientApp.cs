@@ -82,7 +82,7 @@ namespace IT_segmentClient
             Console.WriteLine("\n=== My Orders ===");
             foreach (var o in orders)
             {
-                Console.WriteLine($"Order ID {o.OrderId} Created on {o.OrderDate:d}, Total amount {o.TotalAmount:C}, Order status {o.OrderStatus} | Paid: {o.Paid}");
+                Console.WriteLine($"Order ID {o.OrderId} Created on {o.OrderDate:d}, Total amount {o.TotalAmount:C}, Order status {o.OrderStatus}, Paid: {o.Paid}, Order sent: {o.OrderSent}");
                 foreach (var item in o.Items)
                 {
                     Console.WriteLine($"   -> Product {item.ProductId} x{item.Quantity} @ {item.ItemPrice:C}");
@@ -115,7 +115,7 @@ namespace IT_segmentClient
             else
             {
                 var error = await response.Content.ReadAsStringAsync();
-                Console.WriteLine($"Failed to update payment: {error}");
+                Console.WriteLine($"Please pay first to start processing the order.");
             }
         }
     }

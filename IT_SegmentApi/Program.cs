@@ -1,5 +1,6 @@
 
 using IT_SegmentApi.Data;
+using IT_SegmentApi.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 
@@ -21,6 +22,7 @@ namespace IT_SegmentApi
             }); ;
 
             builder.Services.AddEndpointsApiExplorer();
+            builder.Services.AddHostedService<MqttProcessedListener>();
             builder.Services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "IT API", Version = "v1" });

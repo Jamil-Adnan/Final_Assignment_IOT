@@ -1,4 +1,5 @@
 ﻿using IT_SegmentApi.Data;
+using IT_SegmentApi.DTOs;
 using IT_SegmentApi.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -34,6 +35,7 @@ namespace IT_SegmentApi.Controllers
                 OrderStatus = "Pending",
                 Paid = false,
                 Shipment = false,
+                
                 Items = new List<OrderItem>()
             };
 
@@ -70,6 +72,7 @@ namespace IT_SegmentApi.Controllers
                 order.TotalAmount,
                 order.OrderStatus,
                 order.Paid,
+                order.OrderSent,
                 Items = order.Items.Select(i => new { i.ProductId, i.Quantity, i.ItemPrice })
             });
         }
@@ -91,6 +94,7 @@ namespace IT_SegmentApi.Controllers
                 o.TotalAmount,
                 o.OrderStatus,
                 o.Paid,
+                o.OrderSent,
                 Items = o.Items.Select(i => new { i.ProductId, i.Quantity, i.ItemPrice })
             }));
         }
@@ -114,40 +118,36 @@ namespace IT_SegmentApi.Controllers
         {
             var order = await _context.Orders.FindAsync(id);
             if (order == null) return NotFound("Order not found.");
+            if (order.Paid) return BadRequest(new { message = $"Order {id} is already paid." });
 
-            if (order.Paid)
+            if (!paid) return BadRequest(new { message = "Payment must be true." });
+
+            order.Paid = true;
+            order.OrderStatus = "Paid";
+            await _context.SaveChangesAsync();
+
+            // MQTT (v5) publish to orders/paid
+            var factory = new MqttClientFactory();
+            var client = factory.CreateMqttClient();
+            var options = new MqttClientOptionsBuilder().WithTcpServer("broker.mqtt.cool", 1883).Build();
+            await client.ConnectAsync(options);
+            var payload = System.Text.Json.JsonSerializer.Serialize(new
             {
-                return BadRequest(new { message = $"Order {id} is already paid." });
-            }
+                order.OrderId,
+                order.CustomerId,
+                order.Paid,
+                order.OrderStatus,
+                order.OrderSent
+            });
+            var msg = new MqttApplicationMessageBuilder()
+                .WithTopic("orders/paid")
+                .WithPayload(payload)
+                .Build();
+            await client.PublishAsync(msg);
+            await client.DisconnectAsync();
 
-            if (paid)
-            {
-                order.Paid = true;
-                order.OrderStatus = "Paid";
-
-                // Optional: trigger integration (send to OT or mark in DB)
-                await _context.SaveChangesAsync();
-
-                var mqttClientFactory = new MqttClientFactory();
-                var mqttClient = mqttClientFactory.CreateMqttClient();
-
-                var options = new MqttClientOptionsBuilder()
-                    .WithTcpServer("broker.mqtt.cool", 1883)
-                    .Build();
-
-                await mqttClient.ConnectAsync(options);
-
-                var message = new MqttApplicationMessageBuilder()
-                    .WithTopic("orders/paid")
-                    .WithPayload(JsonSerializer.Serialize(order))
-                    .Build();
-
-                await mqttClient.PublishAsync(message);
-                await mqttClient.DisconnectAsync();
-                return Ok(order);
-            }
-
-            return BadRequest(new { message = "Invalid request. Payment must be true." });
+            return Ok(order);
         }
+
     }
 }

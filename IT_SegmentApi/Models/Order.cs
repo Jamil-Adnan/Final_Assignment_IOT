@@ -9,6 +9,7 @@
         public bool Paid { get; set; } = false;
         public string OrderStatus { get; set; } = "Pending";
         public bool Shipment { get; set; } = false;
+        public bool OrderSent { get; set; } = false;
         public Customer Customer { get; set; }
         public List<OrderItem> Items { get; set; } = new();
     }

@@ -21,23 +21,21 @@ namespace Link_Segment
             mqttClient.ApplicationMessageReceivedAsync += async e =>
             {
                 var message = Encoding.UTF8.GetString(e.ApplicationMessage.Payload);
-                var order = JsonSerializer.Deserialize<Order>(message);
+                Console.WriteLine($"[Integration App] Request Received: {message}");
 
-                Console.WriteLine($"[Integration Stage] Received paid order {order.OrderId}");
-
-                // Forward order to OT via MQTT
-                var otMessage = new MqttApplicationMessageBuilder()
+                // forward as-is
+                var msg = new MqttApplicationMessageBuilder()
                     .WithTopic("orders/forward")
-                    .WithPayload(JsonSerializer.Serialize(order))
+                    .WithPayload(message)
                     .Build();
 
-                await mqttClient.PublishAsync(otMessage);
-                Console.WriteLine($"[Integration Stage] Forwarded order {order.OrderId} to Process and Shipment.");
+                await mqttClient.PublishAsync(msg);
+                Console.WriteLine("[Integration App] Forwarded to OT");
             };
 
             mqttClient.ConnectedAsync += async e =>
             {
-                Console.WriteLine("Connected to MQTT broker.");
+                Console.WriteLine("[Integration App] Connected to MQTT broker.");
 
                 // Subscribe to paid orders
                 await mqttClient.SubscribeAsync("orders/paid");
@@ -45,11 +43,11 @@ namespace Link_Segment
 
             mqttClient.DisconnectedAsync += e =>
             {
-                Console.WriteLine("Disconnected from MQTT broker.");
+                Console.WriteLine("[Integration App] Disconnected from MQTT broker.");
                 return Task.CompletedTask;
             };
 
-            Console.WriteLine("Connecting...");
+            Console.WriteLine("[Integration App] Connecting...");
             await mqttClient.ConnectAsync(options, CancellationToken.None);
 
             Console.WriteLine("Press any key to exit.");

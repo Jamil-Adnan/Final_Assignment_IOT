@@ -14,6 +14,7 @@ namespace IT_segmentClient
         public decimal TotalAmount { get; set; }
         public bool Paid { get; set; }
         public string OrderStatus { get; set; }
+        public bool OrderSent { get; set; }
         //public bool Shipment { get; set; } = false;
         public List<OrderItem> Items { get; set; } = new();
     }
