@@ -43,9 +43,15 @@ namespace IT_SegmentApi.Controllers
 
             foreach (var item in dto.Items)
             {
+                if (item.Quantity <= 0)
+                    return BadRequest($"Quantity for product {item.ProductId} must be greater than zero.");
+
                 var product = await _context.Products.FindAsync(item.ProductId);
                 if (product == null)
                     return BadRequest($"Product {item.ProductId} not found.");
+
+                if (item.Quantity > product.Stock)
+                    return BadRequest($"Not enough stock for product {product.Name}. Available: {product.Stock}");
 
                 order.Items.Add(new OrderItem
                 {
@@ -56,7 +62,6 @@ namespace IT_SegmentApi.Controllers
 
                 total += item.Quantity * product.Price;
 
-                // Optional: decrease stock
                 product.Stock -= item.Quantity;
             }
 
