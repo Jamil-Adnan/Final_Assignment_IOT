@@ -22,7 +22,11 @@ namespace IT_SegmentApi
             }); ;
 
             builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddHostedService<MqttProcessedListener>();
+           
+           builder.Services.AddHostedService<MqttProcessedListener>();
+
+            builder.Services.AddHostedService<OrderSecureService>();
+
             builder.Services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "IT API", Version = "v1" });
