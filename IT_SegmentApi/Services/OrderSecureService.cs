@@ -29,7 +29,7 @@ namespace IT_SegmentApi.Services
 
                     if (unsentOrders.Any())
                     {
-                        Console.WriteLine($"[ResendService] Found {unsentOrders.Count} unsent orders. Republishing...");
+                        Console.WriteLine($"[ResendService] Found {unsentOrders.Count} unshipped orders. Republishing...");
 
                         var factory = new MqttClientFactory();
                         var client = factory.CreateMqttClient();
